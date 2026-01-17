@@ -35,34 +35,34 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="border-b border-gray-200 bg-white shadow-sm">
-        <div className="container mx-auto px-6 py-5 max-w-7xl">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <TrendingUp className="h-6 w-6 text-blue-600" />
-                Trading Journal
+        <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-5 max-w-7xl">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 shrink-0" />
+                <span className="truncate">Trading Journal</span>
               </h1>
               <p className="text-sm text-gray-600 mt-1">Welcome, {session.user.name}</p>
             </div>
             <div className="flex items-center gap-2">
-              <Link href="/dashboard/settings">
+              <Link href="/dashboard/settings" className="flex-1 sm:flex-none">
                 <Button
                   size="sm"
                   variant="outline"
-                  className="border-gray-300 text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  className="border-gray-300 text-gray-700 hover:bg-gray-100 w-full sm:w-auto"
                 >
-                  <Settings className="h-4 w-4 mr-2" />
-                  Settings
+                  <Settings className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Settings</span>
                 </Button>
               </Link>
               <Button
                 onClick={() => signOut({ callbackUrl: "/auth/signin" })}
                 size="sm"
                 variant="outline"
-                className="border-gray-300 text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                className="border-gray-300 text-gray-700 hover:bg-gray-100 flex-1 sm:flex-none"
               >
-                <LogOut className="h-4 w-4 mr-2" />
-                Sign Out
+                <LogOut className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Sign Out</span>
               </Button>
             </div>
           </div>
@@ -70,19 +70,19 @@ export default function Dashboard() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-6 py-8 max-w-7xl">
+      <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-7xl">
         <Tabs defaultValue="crypto" className="space-y-6">
-          <div className="flex justify-center">
+          <div className="flex justify-center overflow-x-auto">
             <TabsList className="bg-white border border-gray-200 shadow-sm">
               <TabsTrigger 
                 value="crypto" 
-                className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=inactive]:text-gray-600 hover:text-gray-900 px-6"
+                className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=inactive]:text-gray-600 hover:text-gray-900 px-4 sm:px-6 text-sm"
               >
-                Crypto Journal
+                Crypto
               </TabsTrigger>
               <TabsTrigger 
                 value="stock" 
-                className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=inactive]:text-gray-600 hover:text-gray-900 px-6"
+                className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=inactive]:text-gray-600 hover:text-gray-900 px-4 sm:px-6 text-sm"
               >
                 Stock Journal
               </TabsTrigger>

@@ -108,3 +108,46 @@ export async function DELETE(request: NextRequest) {
     );
   }
 }
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id, name, type, currency } = await request.json();
+
+    if (!id) {
+      return NextResponse.json(
+        { error: "Platform ID required" },
+        { status: 400 }
+      );
+    }
+
+    const client = await clientPromise;
+    const db = client.db("trading-journal");
+
+    const updateData: Partial<Platform> = {};
+    if (name) updateData.name = name;
+    if (type) updateData.type = type;
+    if (currency) updateData.currency = currency;
+
+    await db.collection<Platform>("platforms").updateOne(
+      {
+        _id: new ObjectId(id),
+        userId: new ObjectId(session.user.id),
+      },
+      { $set: updateData }
+    );
+
+    return NextResponse.json({ message: "Platform updated" });
+  } catch (error) {
+    console.error("Error updating platform:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}

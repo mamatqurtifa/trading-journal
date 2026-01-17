@@ -133,20 +133,21 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="border-b border-gray-200 bg-white shadow-sm">
-        <div className="container mx-auto px-6 py-5 max-w-4xl">
-          <Link href="/dashboard" className="text-gray-500 hover:text-gray-900 text-sm inline-flex items-center gap-1 mb-4">
+        <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-5 max-w-4xl">
+          <Link href="/dashboard" className="text-gray-500 hover:text-gray-900 text-sm inline-flex items-center gap-1 mb-3 sm:mb-4">
             <ArrowLeft className="h-4 w-4" />
-            Back to Dashboard
+            <span className="hidden sm:inline">Back to Dashboard</span>
+            <span className="sm:hidden">Back</span>
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Settings className="h-6 w-6 text-blue-600" />
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <Settings className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
             Settings
           </h1>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-6 py-8 max-w-4xl">
+      <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-4xl">
         {/* Message */}
         {message && (
           <div className={`mb-6 p-4 rounded-lg flex items-center gap-2 ${
@@ -160,27 +161,27 @@ export default function SettingsPage() {
         )}
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="bg-white border border-gray-200 shadow-sm">
+          <TabsList className="bg-white border border-gray-200 shadow-sm w-full sm:w-auto grid grid-cols-3 sm:flex">
             <TabsTrigger 
               value="profile" 
-              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=inactive]:text-gray-600 hover:text-gray-900 px-6"
+              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=inactive]:text-gray-600 hover:text-gray-900 px-3 sm:px-6 text-xs sm:text-sm"
             >
-              <UserIcon className="h-4 w-4 mr-2" />
-              Profile
+              <UserIcon className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Profile</span>
             </TabsTrigger>
             <TabsTrigger 
               value="account" 
-              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=inactive]:text-gray-600 hover:text-gray-900 px-6"
+              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=inactive]:text-gray-600 hover:text-gray-900 px-3 sm:px-6 text-xs sm:text-sm"
             >
-              <Settings className="h-4 w-4 mr-2" />
-              Account
+              <Settings className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Account</span>
             </TabsTrigger>
             <TabsTrigger 
               value="privacy" 
-              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=inactive]:text-gray-600 hover:text-gray-900 px-6"
+              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=inactive]:text-gray-600 hover:text-gray-900 px-3 sm:px-6 text-xs sm:text-sm"
             >
-              <Lock className="h-4 w-4 mr-2" />
-              Privacy
+              <Lock className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Privacy</span>
             </TabsTrigger>
           </TabsList>
 
@@ -251,17 +252,17 @@ export default function SettingsPage() {
                   <CardTitle className="text-gray-900">Profile Preview</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-start gap-4">
-                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                  <div className="flex flex-col sm:flex-row items-start gap-4">
+                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center shrink-0">
                       <span className="text-2xl font-bold text-blue-600">
                         {name?.charAt(0)?.toUpperCase() || "?"}
                       </span>
                     </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-900">{name || "Your Name"}</h3>
-                      <p className="text-gray-600">@{username}</p>
-                      {bio && <p className="text-gray-700 mt-2">{bio}</p>}
-                      <div className="flex gap-4 mt-3">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg sm:text-xl font-bold text-gray-900 wrap-break-word">{name || "Your Name"}</h3>
+                      <p className="text-gray-600 break-all">@{username}</p>
+                      {bio && <p className="text-gray-700 mt-2 text-sm sm:text-base wrap-break-word">{bio}</p>}
+                      <div className="flex gap-4 mt-3 text-sm sm:text-base">
                         <span className="text-gray-600">
                           <strong className="text-gray-900">{user?.followersCount || 0}</strong> followers
                         </span>

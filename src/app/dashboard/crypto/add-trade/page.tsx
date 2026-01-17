@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
-import { Platform } from "@/types";
+import { Platform, Currency } from "@/types";
 import { ArrowLeft, Plus } from "lucide-react";
 
 export default function AddTradePage() {
@@ -31,6 +31,7 @@ export default function AddTradePage() {
   const [fee, setFee] = useState("");
   const [entryDate, setEntryDate] = useState("");
   const [notes, setNotes] = useState("");
+  const [currency, setCurrency] = useState<Currency>("USD");
   
   // Take Profit levels (optional)
   const [tp1, setTp1] = useState("");
@@ -63,10 +64,13 @@ export default function AddTradePage() {
     }
   };
 
-  // Get selected platform's currency
-  const getSelectedPlatformCurrency = () => {
-    const platform = platforms.find(p => p._id?.toString() === platformId);
-    return platform?.currency || "USD";
+  // Get selected platform's currency as default
+  const handlePlatformChange = (value: string) => {
+    setPlatformId(value);
+    const platform = platforms.find(p => p._id?.toString() === value);
+    if (platform?.currency) {
+      setCurrency(platform.currency);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -74,8 +78,6 @@ export default function AddTradePage() {
     setSubmitting(true);
 
     try {
-      const currency = getSelectedPlatformCurrency();
-      
       const response = await fetch("/api/trades", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -161,19 +163,20 @@ export default function AddTradePage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="border-b border-gray-200 bg-white shadow-sm">
-        <div className="container mx-auto px-6 py-5 max-w-7xl">
-          <Link href="/dashboard/crypto" className="text-gray-500 hover:text-gray-900 text-sm inline-flex items-center gap-1 mb-4">
+        <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-5 max-w-7xl">
+          <Link href="/dashboard/crypto" className="text-gray-500 hover:text-gray-900 text-sm inline-flex items-center gap-1 mb-3 sm:mb-4">
             <ArrowLeft className="h-4 w-4" />
-            Back to Crypto Dashboard
+            <span className="hidden sm:inline">Back to Crypto Dashboard</span>
+            <span className="sm:hidden">Back</span>
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Plus className="h-6 w-6 text-blue-600" />
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <Plus className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
             Add Trade
           </h1>
         </div>
       </header>
 
-      <main className="container mx-auto px-6 py-8 max-w-3xl">
+      <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-3xl">
         <Card className="bg-white border-gray-200 shadow-sm">
           <CardHeader>
             <CardTitle className="text-gray-900">New Trade</CardTitle>
@@ -207,7 +210,7 @@ export default function AddTradePage() {
                 {/* Platform */}
                 <div className="space-y-2">
                   <Label className="text-gray-700">Platform</Label>
-                  <Select value={platformId} onValueChange={setPlatformId} required>
+                  <Select value={platformId} onValueChange={handlePlatformChange} required>
                     <SelectTrigger className="bg-white border-gray-300 text-gray-900">
                       <SelectValue placeholder="Select platform" />
                     </SelectTrigger>
@@ -218,9 +221,23 @@ export default function AddTradePage() {
                           value={platform._id!.toString()}
                           className="text-gray-900 hover:bg-gray-100 focus:bg-gray-100"
                         >
-                          {platform.name}
+                          {platform.name} ({platform.currency || "USD"})
                         </SelectItem>
                       ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Currency */}
+                <div className="space-y-2">
+                  <Label className="text-gray-700">Currency</Label>
+                  <Select value={currency} onValueChange={(v: Currency) => setCurrency(v)}>
+                    <SelectTrigger className="bg-white border-gray-300 text-gray-900">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white border-gray-200 text-gray-900">
+                      <SelectItem value="USD" className="text-gray-900 hover:bg-gray-100 focus:bg-gray-100">🇺🇸 USD</SelectItem>
+                      <SelectItem value="IDR" className="text-gray-900 hover:bg-gray-100 focus:bg-gray-100">🇮🇩 IDR</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -334,21 +351,21 @@ export default function AddTradePage() {
 
               {/* Take Profit Levels (Optional) */}
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <Label className="text-gray-700 font-medium">Take Profit Levels (Optional)</Label>
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     onClick={() => setShowTpLevels(!showTpLevels)}
-                    className="border-gray-300 text-gray-700 hover:bg-gray-100"
+                    className="border-gray-300 text-gray-700 hover:bg-gray-100 w-full sm:w-auto"
                   >
                     {showTpLevels ? "Hide" : "Show"} TP Levels
                   </Button>
                 </div>
                 
                 {showTpLevels && (
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200">
                     <div className="space-y-2">
                       <Label className="text-gray-600 text-sm">TP1</Label>
                       <Input

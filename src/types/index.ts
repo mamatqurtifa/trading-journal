@@ -12,15 +12,15 @@ export interface User {
   username?: string; // Unique slug for profile URL
   bio?: string;
   avatar?: string;
-  
+
   // Settings
   defaultCurrency: Currency;
   isPublic: boolean; // Public or Private account
-  
+
   // Stats
   followersCount: number;
   followingCount: number;
-  
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -57,14 +57,14 @@ export interface Trade {
   tradeType: TradeType;
   direction: TradeDirection;
   currency: Currency; // Currency used for this trade
-  
+
   // Trade details
   symbol: string;
   entry: number;
   exit?: number;
   size: number;
   leverage?: number; // For futures
-  
+
   // Take Profit levels (optional)
   tp1?: number;
   tp2?: number;
@@ -72,23 +72,23 @@ export interface Trade {
   tp4?: number;
   tp5?: number;
   stopLoss?: number;
-  
+
   // Trade status
   status: TradeStatus;
-  
+
   // Financial data
   pnl?: number;
   pnlPercentage?: number;
   fee: number;
-  
+
   // Dates
   entryDate: Date;
   exitDate?: Date;
-  
+
   // Notes
   notes?: string;
   tags?: string[];
-  
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -116,4 +116,43 @@ export interface PnLStats {
   bestTrade: number;
   worstTrade: number;
   profitFactor: number;
+}
+
+// Net Worth / Portfolio types
+export type TransactionType = "deposit" | "withdraw" | "transfer";
+
+export interface NetWorthTransaction {
+  _id?: ObjectId;
+  userId: ObjectId;
+  platformId?: ObjectId; // Optional - can be null for external wallet
+  platformName?: string; // Store platform name for display
+  type: TransactionType;
+  amount: number;
+  currency: Currency;
+
+  // For transfers
+  toPlatformId?: ObjectId;
+  toPlatformName?: string;
+
+  description?: string;
+  date: Date;
+  createdAt: Date;
+}
+
+export interface PlatformBalance {
+  platformId: ObjectId;
+  platformName: string;
+  balance: number;
+  currency: Currency;
+  lastUpdated: Date;
+}
+
+export interface NetWorthSnapshot {
+  _id?: ObjectId;
+  userId: ObjectId;
+  totalUSD: number; // Total net worth converted to USD
+  totalIDR: number; // Total net worth converted to IDR
+  balances: PlatformBalance[];
+  date: Date;
+  createdAt: Date;
 }
