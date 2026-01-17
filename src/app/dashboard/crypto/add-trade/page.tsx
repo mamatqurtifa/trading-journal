@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
 import { Platform } from "@/types";
-import { ArrowLeft, Plus, DollarSign, TrendingUp, TrendingDown } from "lucide-react";
+import { ArrowLeft, Plus } from "lucide-react";
 
 export default function AddTradePage() {
   const { data: session, status } = useSession();
@@ -26,13 +26,20 @@ export default function AddTradePage() {
   const [symbol, setSymbol] = useState("");
   const [direction, setDirection] = useState<"long" | "short">("long");
   const [entry, setEntry] = useState("");
-  const [exit, setExit] = useState("");
   const [size, setSize] = useState("");
   const [leverage, setLeverage] = useState("");
   const [fee, setFee] = useState("");
   const [entryDate, setEntryDate] = useState("");
-  const [exitDate, setExitDate] = useState("");
   const [notes, setNotes] = useState("");
+  
+  // Take Profit levels (optional)
+  const [tp1, setTp1] = useState("");
+  const [tp2, setTp2] = useState("");
+  const [tp3, setTp3] = useState("");
+  const [tp4, setTp4] = useState("");
+  const [tp5, setTp5] = useState("");
+  const [stopLoss, setStopLoss] = useState("");
+  const [showTpLevels, setShowTpLevels] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -56,23 +63,10 @@ export default function AddTradePage() {
     }
   };
 
-  const calculatePnL = () => {
-    const entryPrice = parseFloat(entry);
-    const exitPrice = parseFloat(exit);
-    const tradeSize = parseFloat(size);
-    const tradeFee = parseFloat(fee) || 0;
-
-    if (!entryPrice || !exitPrice || !tradeSize) return null;
-
-    let pnl = 0;
-    if (direction === "long") {
-      pnl = (exitPrice - entryPrice) * tradeSize - tradeFee;
-    } else {
-      pnl = (entryPrice - exitPrice) * tradeSize - tradeFee;
-    }
-
-    const pnlPercentage = ((exitPrice - entryPrice) / entryPrice) * 100;
-    return { pnl, pnlPercentage };
+  // Get selected platform's currency
+  const getSelectedPlatformCurrency = () => {
+    const platform = platforms.find(p => p._id?.toString() === platformId);
+    return platform?.currency || "USD";
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -80,7 +74,7 @@ export default function AddTradePage() {
     setSubmitting(true);
 
     try {
-      const pnlData = calculatePnL();
+      const currency = getSelectedPlatformCurrency();
       
       const response = await fetch("/api/trades", {
         method: "POST",
@@ -92,15 +86,19 @@ export default function AddTradePage() {
           direction,
           symbol: symbol.toUpperCase(),
           entry: parseFloat(entry),
-          exit: exit ? parseFloat(exit) : undefined,
           size: parseFloat(size),
           leverage: leverage ? parseFloat(leverage) : undefined,
           fee: parseFloat(fee) || 0,
-          pnl: pnlData?.pnl,
-          pnlPercentage: pnlData?.pnlPercentage,
           entryDate: new Date(entryDate),
-          exitDate: exitDate ? new Date(exitDate) : undefined,
           notes,
+          currency, // Include currency from platform
+          // Take Profit levels (optional)
+          tp1: tp1 ? parseFloat(tp1) : undefined,
+          tp2: tp2 ? parseFloat(tp2) : undefined,
+          tp3: tp3 ? parseFloat(tp3) : undefined,
+          tp4: tp4 ? parseFloat(tp4) : undefined,
+          tp5: tp5 ? parseFloat(tp5) : undefined,
+          stopLoss: stopLoss ? parseFloat(stopLoss) : undefined,
         }),
       });
 
@@ -159,8 +157,6 @@ export default function AddTradePage() {
       </div>
     );
   }
-
-  const pnlData = calculatePnL();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -269,15 +265,15 @@ export default function AddTradePage() {
                   />
                 </div>
 
-                {/* Exit Price */}
+                {/* Stop Loss */}
                 <div className="space-y-2">
-                  <Label className="text-gray-700">Exit Price (Optional)</Label>
+                  <Label className="text-gray-700">Stop Loss (Optional)</Label>
                   <Input
                     type="number"
                     step="any"
                     placeholder="0.00"
-                    value={exit}
-                    onChange={(e) => setExit(e.target.value)}
+                    value={stopLoss}
+                    onChange={(e) => setStopLoss(e.target.value)}
                     className="bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                   />
                 </div>
@@ -334,17 +330,82 @@ export default function AddTradePage() {
                     className="bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                   />
                 </div>
+              </div>
 
-                {/* Exit Date */}
-                <div className="space-y-2">
-                  <Label className="text-gray-700">Exit Date (Optional)</Label>
-                  <Input
-                    type="datetime-local"
-                    value={exitDate}
-                    onChange={(e) => setExitDate(e.target.value)}
-                    className="bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                  />
+              {/* Take Profit Levels (Optional) */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label className="text-gray-700 font-medium">Take Profit Levels (Optional)</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowTpLevels(!showTpLevels)}
+                    className="border-gray-300 text-gray-700 hover:bg-gray-100"
+                  >
+                    {showTpLevels ? "Hide" : "Show"} TP Levels
+                  </Button>
                 </div>
+                
+                {showTpLevels && (
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="space-y-2">
+                      <Label className="text-gray-600 text-sm">TP1</Label>
+                      <Input
+                        type="number"
+                        step="any"
+                        placeholder="0.00"
+                        value={tp1}
+                        onChange={(e) => setTp1(e.target.value)}
+                        className="bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-gray-600 text-sm">TP2</Label>
+                      <Input
+                        type="number"
+                        step="any"
+                        placeholder="0.00"
+                        value={tp2}
+                        onChange={(e) => setTp2(e.target.value)}
+                        className="bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-gray-600 text-sm">TP3</Label>
+                      <Input
+                        type="number"
+                        step="any"
+                        placeholder="0.00"
+                        value={tp3}
+                        onChange={(e) => setTp3(e.target.value)}
+                        className="bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-gray-600 text-sm">TP4</Label>
+                      <Input
+                        type="number"
+                        step="any"
+                        placeholder="0.00"
+                        value={tp4}
+                        onChange={(e) => setTp4(e.target.value)}
+                        className="bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-gray-600 text-sm">TP5</Label>
+                      <Input
+                        type="number"
+                        step="any"
+                        placeholder="0.00"
+                        value={tp5}
+                        onChange={(e) => setTp5(e.target.value)}
+                        className="bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Notes */}
@@ -358,39 +419,6 @@ export default function AddTradePage() {
                   className="w-full px-3 py-2 bg-white border border-gray-300 text-gray-900 placeholder:text-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 />
               </div>
-
-              {/* PnL Preview */}
-              {pnlData && (
-                <Card className="bg-gray-50 border-gray-200">
-                  <CardHeader>
-                    <CardTitle className="text-sm text-gray-600 flex items-center gap-2">
-                      <DollarSign className="h-4 w-4 text-blue-600" />
-                      PnL Preview
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-600">Profit/Loss:</span>
-                      <div className="flex items-center gap-2">
-                        {pnlData.pnl > 0 ? (
-                          <TrendingUp className="h-5 w-5 text-green-600" />
-                        ) : pnlData.pnl < 0 ? (
-                          <TrendingDown className="h-5 w-5 text-red-600" />
-                        ) : null}
-                        <span className={`text-xl font-bold ${
-                          pnlData.pnl > 0 
-                            ? "text-green-600" 
-                            : pnlData.pnl < 0 
-                            ? "text-red-600" 
-                            : "text-gray-900"
-                        }`}>
-                          ${pnlData.pnl.toFixed(2)} ({pnlData.pnlPercentage.toFixed(2)}%)
-                        </span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
 
               <Button
                 type="submit"

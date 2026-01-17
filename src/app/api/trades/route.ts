@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import clientPromise from "@/lib/mongodb";
-import { Trade, DailySummary } from "@/types";
+import { Trade, DailySummary, TradeStatus } from "@/types";
 import { ObjectId } from "mongodb";
 
 export async function GET(request: NextRequest) {
@@ -61,15 +61,19 @@ export async function POST(request: NextRequest) {
       direction,
       symbol,
       entry,
-      exit,
       size,
       leverage,
       fee,
-      pnl,
-      pnlPercentage,
       entryDate,
-      exitDate,
       notes,
+      currency,
+      // Take Profit levels
+      tp1,
+      tp2,
+      tp3,
+      tp4,
+      tp5,
+      stopLoss,
     } = body;
 
     const client = await clientPromise;
@@ -81,33 +85,28 @@ export async function POST(request: NextRequest) {
       journalType,
       tradeType,
       direction,
+      currency: currency || "USD",
       symbol,
       entry,
-      exit,
       size,
       leverage,
       fee,
-      pnl,
-      pnlPercentage,
       entryDate: new Date(entryDate),
-      exitDate: exitDate ? new Date(exitDate) : undefined,
       notes,
+      // Take Profit levels (optional)
+      tp1,
+      tp2,
+      tp3,
+      tp4,
+      tp5,
+      stopLoss,
+      // New trade starts as "running"
+      status: "running" as TradeStatus,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
     const result = await db.collection<Trade>("trades").insertOne(trade as Trade);
-
-    // Update daily summary if trade is closed
-    if (exit && exitDate && pnl !== undefined) {
-      await updateDailySummary(
-        db,
-        new ObjectId(session.user.id),
-        new Date(exitDate),
-        journalType,
-        pnl
-      );
-    }
 
     return NextResponse.json(
       { message: "Trade created", tradeId: result.insertedId },
@@ -115,6 +114,138 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error("Error creating trade:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+// Calculate trade status based on exit price and TP levels
+function calculateTradeStatus(
+  trade: Trade,
+  exitPrice: number
+): TradeStatus {
+  const { entry, direction, tp1, tp2, tp3, tp4, tp5, stopLoss } = trade;
+  const isLong = direction === "long";
+  
+  // Check if it's a loss (hit stop loss or price went against direction)
+  const isLoss = isLong ? exitPrice < entry : exitPrice > entry;
+  
+  if (isLoss) {
+    return "stoploss";
+  }
+  
+  // It's a profit - check which TP was hit (from highest to lowest)
+  const tpLevels = [
+    { level: "tp5" as TradeStatus, price: tp5 },
+    { level: "tp4" as TradeStatus, price: tp4 },
+    { level: "tp3" as TradeStatus, price: tp3 },
+    { level: "tp2" as TradeStatus, price: tp2 },
+    { level: "tp1" as TradeStatus, price: tp1 },
+  ];
+  
+  for (const tp of tpLevels) {
+    if (tp.price !== undefined && tp.price !== null) {
+      if (isLong && exitPrice >= tp.price) {
+        return tp.level;
+      }
+      if (!isLong && exitPrice <= tp.price) {
+        return tp.level;
+      }
+    }
+  }
+  
+  // Profit but no TP level matched
+  return "profit";
+}
+
+// PATCH - Close/Exit a position
+export async function PATCH(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { tradeId, exitPrice, exitDate } = body;
+
+    if (!tradeId || !exitPrice) {
+      return NextResponse.json(
+        { error: "Trade ID and exit price are required" },
+        { status: 400 }
+      );
+    }
+
+    const client = await clientPromise;
+    const db = client.db("trading-journal");
+
+    // Get the existing trade
+    const trade = await db.collection<Trade>("trades").findOne({
+      _id: new ObjectId(tradeId),
+      userId: new ObjectId(session.user.id),
+    });
+
+    if (!trade) {
+      return NextResponse.json({ error: "Trade not found" }, { status: 404 });
+    }
+
+    if (trade.status !== "running") {
+      return NextResponse.json(
+        { error: "Trade is already closed" },
+        { status: 400 }
+      );
+    }
+
+    // Calculate PnL
+    const { entry, direction, size, fee } = trade;
+    let pnl = 0;
+    if (direction === "long") {
+      pnl = (exitPrice - entry) * size - (fee || 0);
+    } else {
+      pnl = (entry - exitPrice) * size - (fee || 0);
+    }
+    const pnlPercentage = ((exitPrice - entry) / entry) * 100;
+
+    // Calculate status
+    const status = calculateTradeStatus(trade, exitPrice);
+
+    const exitDateValue = exitDate ? new Date(exitDate) : new Date();
+
+    // Update the trade
+    await db.collection<Trade>("trades").updateOne(
+      { _id: new ObjectId(tradeId) },
+      {
+        $set: {
+          exit: exitPrice,
+          exitDate: exitDateValue,
+          pnl,
+          pnlPercentage,
+          status,
+          updatedAt: new Date(),
+        },
+      }
+    );
+
+    // Update daily summary
+    await updateDailySummary(
+      db,
+      new ObjectId(session.user.id),
+      exitDateValue,
+      trade.journalType,
+      pnl
+    );
+
+    return NextResponse.json({
+      message: "Trade closed successfully",
+      status,
+      pnl,
+      pnlPercentage,
+    });
+  } catch (error) {
+    console.error("Error closing trade:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import Link from "next/link";
-import { Platform } from "@/types";
+import { Platform, Currency } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Plus, Trash2, Building2 } from "lucide-react";
 
@@ -24,6 +24,7 @@ export default function PlatformsPage() {
   // Form state
   const [name, setName] = useState("");
   const [type, setType] = useState<"exchange" | "broker" | "wallet">("exchange");
+  const [currency, setCurrency] = useState<Currency>("USD");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -56,13 +57,14 @@ export default function PlatformsPage() {
       const response = await fetch("/api/platforms", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, type }),
+        body: JSON.stringify({ name, type, currency }),
       });
 
       if (response.ok) {
         setDialogOpen(false);
         setName("");
         setType("exchange");
+        setCurrency("USD");
         fetchPlatforms();
       }
     } catch (error) {
@@ -161,6 +163,19 @@ export default function PlatformsPage() {
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="currency" className="text-gray-700">Currency</Label>
+                  <Select value={currency} onValueChange={(value: Currency) => setCurrency(value)}>
+                    <SelectTrigger className="bg-white border-gray-300 text-gray-900">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white border-gray-200 text-gray-900">
+                      <SelectItem value="USD" className="text-gray-900 hover:bg-gray-100 focus:bg-gray-100">🇺🇸 USD - US Dollar</SelectItem>
+                      <SelectItem value="IDR" className="text-gray-900 hover:bg-gray-100 focus:bg-gray-100">🇮🇩 IDR - Indonesian Rupiah</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-sm text-gray-500">Currency used on this platform</p>
+                </div>
                 <Button 
                   type="submit" 
                   className="w-full bg-blue-600 text-white hover:bg-blue-700"
@@ -191,9 +206,12 @@ export default function PlatformsPage() {
                       </div>
                       <div>
                         <CardTitle className="text-gray-900">{platform.name}</CardTitle>
-                        <CardDescription className="text-gray-600 mt-1">
+                        <CardDescription className="text-gray-600 mt-1 flex gap-2">
                           <Badge variant="outline" className="border-gray-300 text-gray-700 bg-gray-50">
                             {platform.type}
+                          </Badge>
+                          <Badge variant="outline" className="border-blue-300 text-blue-700 bg-blue-50">
+                            {platform.currency || "USD"}
                           </Badge>
                         </CardDescription>
                       </div>

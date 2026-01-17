@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import clientPromise from "@/lib/mongodb";
-import { Platform } from "@/types";
+import { Platform, Currency } from "@/types";
 import { ObjectId } from "mongodb";
 
 export async function GET(request: NextRequest) {
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { name, type } = await request.json();
+    const { name, type, currency } = await request.json();
 
     if (!name || !type) {
       return NextResponse.json(
@@ -56,6 +56,7 @@ export async function POST(request: NextRequest) {
       userId: new ObjectId(session.user.id),
       name,
       type,
+      currency: currency || "USD",
       createdAt: new Date(),
     });
 

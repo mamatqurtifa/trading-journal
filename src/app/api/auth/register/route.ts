@@ -30,11 +30,15 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user
+    // Create user with default settings
     const result = await db.collection<User>("users").insertOne({
       name,
       email,
       password: hashedPassword,
+      defaultCurrency: "USD",
+      isPublic: false,
+      followersCount: 0,
+      followingCount: 0,
       createdAt: new Date(),
       updatedAt: new Date(),
     });

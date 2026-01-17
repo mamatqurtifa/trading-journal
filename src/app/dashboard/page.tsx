@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { LogOut, TrendingUp, ArrowRight } from "lucide-react";
+import { LogOut, TrendingUp, ArrowRight, Settings, User } from "lucide-react";
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
@@ -44,15 +44,27 @@ export default function Dashboard() {
               </h1>
               <p className="text-sm text-gray-600 mt-1">Welcome, {session.user.name}</p>
             </div>
-            <Button
-              onClick={() => signOut({ callbackUrl: "/auth/signin" })}
-              size="sm"
-              variant="outline"
-              className="border-gray-300 text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
-            </Button>
+            <div className="flex items-center gap-2">
+              <Link href="/dashboard/settings">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-gray-300 text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  Settings
+                </Button>
+              </Link>
+              <Button
+                onClick={() => signOut({ callbackUrl: "/auth/signin" })}
+                size="sm"
+                variant="outline"
+                className="border-gray-300 text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
+              </Button>
+            </div>
           </div>
         </div>
       </header>
